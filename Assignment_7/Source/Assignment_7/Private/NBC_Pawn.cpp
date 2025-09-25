@@ -25,7 +25,7 @@ ANBC_Pawn::ANBC_Pawn()
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
 	SkeletalMeshComponent->SetSimulatePhysics(false); // 물리 시뮬레이션 비활성화
 
-	// 스르핑 암 컴포넌트 생성
+	// 스프링 암 컴포넌트 생성
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(RootComponent);
 	SpringArmComponent->TargetArmLength = 300.0f; // 캐릭터와 카메라 사이 기본값 설정
@@ -47,7 +47,7 @@ void ANBC_Pawn::BeginPlay()
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
-			// tMappingContext가 할당되었는지 확인
+			// MappingContext가 할당되었는지 확인
 			if (MappingContext)
 			{
 				Subsystem->AddMappingContext(MappingContext, 0);
@@ -59,15 +59,7 @@ void ANBC_Pawn::BeginPlay()
 			}
 		}
 
-		// =================================================================
-		// 아래 코드를 추가해서 마우스 설정을 강제로 바로잡습니다.
-		// =================================================================
-		//FInputModeGameOnly InputMode; // 게임 조작에만 입력을 사용하도록 설정
-		//PlayerController->SetInputMode(InputMode);
-		//PlayerController->SetShowMouseCursor(false); // 마우스 커서를 숨김
-
-		//UE_LOG(LogForNBC, Log, TEXT("Input mode has been set to GameOnly."));
-		// =================================================================
+		
 	}
 }
 
@@ -76,6 +68,14 @@ void ANBC_Pawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// --- 회전 처리 ---
+	// FRotator(Pitch, Yaw, Roll) 순서입니다.
+	FRotator DeltaRotation = FRotator(CurrentRotationInput.Pitch, CurrentRotationInput.Yaw, CurrentRotationInput.Roll) * 100.0f * DeltaTime;
+	AddActorLocalRotation(DeltaRotation, true);
+
+	// --- 이동 처리 ---
+	FVector DeltaMovement = FVector(CurrentMovementInput.X, CurrentMovementInput.Y, CurrentMovementInput.Z) * MoveSpeed * DeltaTime;
+	AddActorLocalOffset(DeltaMovement, true);
 }
 
 // Called to bind functionality to input
@@ -101,7 +101,7 @@ void ANBC_Pawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		}
 		else
 		{
-			UE_LOG(LogForNBC, Warning, TEXT("MoveAction is NOT assigned in the Blueprint!"));
+			UE_LOG(LogForNBC, Error, TEXT("MoveAction is NOT assigned in the Blueprint!"));
 		}
 
 		// LookAction을 Look() 함수에 바인딩
@@ -114,12 +114,48 @@ void ANBC_Pawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				this, 
 				&ANBC_Pawn::Look);
 
-			UE_LOG(LogForNBC, Error, TEXT("LookAction is assigned in the Blueprint!"));
+			UE_LOG(LogForNBC, Warning, TEXT("LookAction is assigned in the Blueprint!"));
 		}
 		else
 		{
 			// 할당되지 않았다면 에러 로그를 띄웁니다.
 			UE_LOG(LogForNBC, Error, TEXT("LookAction is NOT assigned in the Blueprint!"));
+		}
+
+		// LevitationAction을 Look() 함수에 바인딩
+		// LevitationAction이 할당되었는지 확인
+		if (LevitationAction)
+		{
+			EnhancedInputComponent->BindAction(
+				LevitationAction,
+				ETriggerEvent::Triggered,
+				this,
+				&ANBC_Pawn::Look);
+
+			UE_LOG(LogForNBC, Warning, TEXT("LevitationAction is assigned in the Blueprint!"));
+		}
+		else
+		{
+			// 할당되지 않았다면 에러 로그를 띄웁니다.
+			UE_LOG(LogForNBC, Error, TEXT("LevitationAction is NOT assigned in the Blueprint!"));
+		}
+
+		// RollAction을 Look() 함수에 바인딩
+		// RollAction이 할당되었는지 확인
+		if (LevitationAction)
+		{
+			EnhancedInputComponent->BindAction(
+				RollAction,
+				ETriggerEvent::Triggered,
+				this,
+				&ANBC_Pawn::Look);
+
+			UE_LOG(LogForNBC, Warning, TEXT("RollAction is assigned in the Blueprint!"));
+		}
+		else
+		{
+			// 할당되지 않았다면 에러 로그를 띄웁니다.
+			UE_LOG(LogForNBC, Error, TEXT("RollAction is NOT assigned in the Blueprint!"));
 		}
 	}
 }
@@ -166,5 +202,15 @@ void ANBC_Pawn::Look(const FInputActionValue& Value)
 			FMath::Clamp(CurrentSpringArmRotation.Pitch + (LookAxisVector.Y * -1.0f), -60.0f, 30.0f);
 		SpringArmComponent->SetRelativeRotation(FRotator(NewPitch, 0.0f, 0.0f));
 	}
+}
+
+void ANBC_Pawn::Levitation(const FInputActionValue& Value)
+{
+
+}
+
+void ANBC_Pawn::Roll(const FInputActionValue& Value)
+{
+
 }
 

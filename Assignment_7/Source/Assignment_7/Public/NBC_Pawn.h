@@ -63,10 +63,25 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* LevitationAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* RollAction;
 
-	// 입력 처리 함수
+	// 필드 이동 입력 처리 함수
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
+
+	// 드론체 이동 입력 처리 함수
+	UFUNCTION()
+	void Levitation(const FInputActionValue& Value);
+	UFUNCTION()
+	void Roll(const FInputActionValue& Value);
+
+	FVector CurrentMovementInput;
+	FRotator CurrentRotationInput;
 };
